@@ -11,8 +11,11 @@ import json
 import logging
 import pathlib
 from dataclasses import dataclass
+from http.client import HTTPSConnection
 from typing import Dict
 from typing import Optional
+
+from egggist.models.basegist import BaseGist
 
 
 class EggGist:
@@ -32,6 +35,17 @@ class EggGist:
 
         with open(self.CONFIG_FILE, "r", encoding="utf-8") as infile:
             return ConfigFile.from_dict(json.load(infile))
+
+    def post_gist(self, gistname: str, gistcontent: str) -> Optional[BaseGist]:
+        """create a gist"""
+        headers = {"Accept": "appliction/vnd.github.v3+json"}
+        body = json.dumps({"files": {gistname: gistcontent}})
+        conn = HTTPSConnection("api.github.com")
+        conn.request("POST", "/gist", body=body, headers=headers)
+        response = conn.getresponse()
+        if response.status != 201:
+            return None
+        return BaseGist(**json.loads(response.read().decode("utf-8")))
 
 
 @dataclass
