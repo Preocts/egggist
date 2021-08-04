@@ -36,16 +36,39 @@ class EggGist:
         with open(self.CONFIG_FILE, "r", encoding="utf-8") as infile:
             return ConfigFile.from_dict(json.load(infile))
 
+    def _build_headers(self) -> Dict[str, str]:
+        """Builds the header with auth key, prompts if key is not in config"""
+        if self.config.username is None:
+            self.config.username = input("Enter GitHub username: ")
+        if self.config.usertoken is None:
+            self.config.usertoken = input("Enter GitHub auth token: ")
+        return {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": f"token {self.config.usertoken}",
+            "User-Agent": self.config.username,
+        }
+
     def post_gist(self, gistname: str, gistcontent: str) -> Optional[BaseGist]:
         """create a gist"""
-        headers = {"Accept": "appliction/vnd.github.v3+json"}
-        body = json.dumps({"files": {gistname: gistcontent}})
-        conn = HTTPSConnection("api.github.com")
-        conn.request("POST", "/gist", body=body, headers=headers)
+        body = json.dumps(
+            {
+                "description": "Eggcellent Gist",
+                "public": True,
+                "files": {
+                    gistname: {
+                        "content": gistcontent,
+                    },
+                },
+            },
+        )
+        conn = HTTPSConnection(host="api.github.com", port=443, timeout=5.0)
+        conn.request("POST", "/gists", body=body, headers=self._build_headers())
         response = conn.getresponse()
         if response.status != 201:
+            self.log.error("Error status: %s", response.status)
+            self.log.error("%s", response.read().decode("utf-8"))
             return None
-        return BaseGist(**json.loads(response.read().decode("utf-8")))
+        return BaseGist()  # **json.loads(response.read().decode("utf-8")))
 
 
 @dataclass
