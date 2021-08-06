@@ -27,6 +27,7 @@ class EggGist:
     def __init__(self) -> None:
         """Create instance and load config file"""
         self.config: ConfigFile = self._load_config()
+        self.conn = HTTPSConnection(host="api.github.com", port=443, timeout=5.0)
 
     def _load_config(self) -> ConfigFile:
         """Loads JSON config from user home directory"""
@@ -48,27 +49,24 @@ class EggGist:
             "User-Agent": self.config.username,
         }
 
-    def post_gist(self, gistname: str, gistcontent: str) -> Optional[BaseGist]:
+    def post_gist(self, filename: str, filecontent: str) -> Optional[BaseGist]:
         """create a gist"""
         body = json.dumps(
             {
                 "description": "Eggcellent Gist",
                 "public": True,
                 "files": {
-                    gistname: {
-                        "content": gistcontent,
+                    filename: {
+                        "content": filecontent,
                     },
                 },
             },
         )
-        conn = HTTPSConnection(host="api.github.com", port=443, timeout=5.0)
-        conn.request("POST", "/gists", body=body, headers=self._build_headers())
-        response = conn.getresponse()
+        self.conn.request("POST", "/gists", body=body, headers=self._build_headers())
+        response = self.conn.getresponse()
         if response.status != 201:
             self.log.error("Error status: %s", response.status)
-            self.log.error("%s", response.read().decode("utf-8"))
-            return None
-        return BaseGist()  # **json.loads(response.read().decode("utf-8")))
+        return json.loads(response.read().decode("utf-8"))
 
 
 @dataclass
