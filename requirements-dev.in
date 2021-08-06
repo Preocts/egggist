@@ -5,5 +5,3 @@ flake8
 pytest
 coverage
 tox
-vcrpy
-secretbox
