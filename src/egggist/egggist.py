@@ -66,7 +66,9 @@ class EggGist:
         response = self.conn.getresponse()
         if response.status != 201:
             self.log.error("Error status: %s", response.status)
-        return json.loads(response.read().decode("utf-8"))
+            self.log.error("Error data %s", response.read().decode("utf-8"))
+            return None
+        return BaseGist(**json.loads(response.read().decode("utf-8")))
 
 
 @dataclass

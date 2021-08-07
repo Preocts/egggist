@@ -16,6 +16,15 @@
             "size": 11,
             "truncated": false,
             "content": "# Test Gist"
+        },
+        "test_file02.md": {
+            "filename": "test_file.md",
+            "type": "text/markdown",
+            "language": "Markdown",
+            "raw_url": "https://gist.githubusercontent.com/Preocts/f57915f8bfa1894f955eb5a3742b8c5d/raw/e978bd6fb576779ddf9f0f91a6f91d456b987600/test_file.md",
+            "size": 11,
+            "truncated": false,
+            "content": "# Test Gist"
         }
     },
     "public": true,

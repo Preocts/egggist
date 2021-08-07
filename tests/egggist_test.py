@@ -4,6 +4,7 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Generator
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
@@ -13,6 +14,8 @@ from egggist import egggist
 
 MOCK_CONFIG = {"username": "TEST", "usertoken": "TOKEN"}
 NO_FILE_NAMED_THIS = "this_file_should_not_exist"
+CREATE_SUCCESS = open("tests/fixtures/create_success.json", "r").read().encode("utf-8")
+CREATE_FAIL = open("tests/fixtures/create_fail_token.json", "r").read().encode("utf-8")
 
 
 @pytest.fixture(scope="function", name="config_file")
@@ -25,6 +28,16 @@ def fixture_config_file() -> Generator[str, None, None]:
         yield path
     finally:
         os.remove(path)
+
+
+@pytest.fixture(scope="function", name="client")
+def fixture_client() -> Generator[EggGist, None, None]:
+    """Gererate a client with config values mocked"""
+    client = EggGist()
+    client.config.username = "mock"
+    client.config.usertoken = "mock"
+
+    yield client
 
 
 def test_create_instance_with_config(config_file: str) -> None:
@@ -56,3 +69,48 @@ def test_configfile_class() -> None:
         assert getattr(config_empty, key) is None
 
     assert config.as_dict() == MOCK_CONFIG
+
+
+def test_build_headers_missing() -> None:
+    """Prompt for user input and use those values"""
+    client = EggGist()
+    with patch("builtins.input", lambda value: "mock"):
+        headers = client._build_headers()
+
+    assert headers["User-Agent"] == "mock"
+    assert "mock" in headers["Authorization"]
+
+
+def test_build_headers_present(client: EggGist) -> None:
+    """Do not prompt for input if config values are present"""
+
+    headers = client._build_headers()
+
+    assert headers["User-Agent"] == "mock"
+    assert "mock" in headers["Authorization"]
+
+
+def test_post_gist_success(client: EggGist) -> None:
+    """Use mock response to simulate success"""
+    json_expected = json.loads(CREATE_SUCCESS.decode("utf-8"))
+    with patch.object(client, "conn") as conn:
+        read = MagicMock(return_value=CREATE_SUCCESS)
+        response = MagicMock(status=201, read=read)
+        conn.getresponse = MagicMock(return_value=response)
+
+        results = client.post_gist("test.md", "")
+
+        assert results is not None
+        assert results.as_dict == json_expected
+
+
+def test_post_gist_fail(client: EggGist) -> None:
+    """Use mock to simulate a failed response"""
+    with patch.object(client, "conn") as conn:
+        read = MagicMock(return_value=CREATE_FAIL)
+        response = MagicMock(status=403, read=read)
+        conn.getresponse = MagicMock(return_value=response)
+
+        results = client.post_gist("test.md", "")
+
+        assert results is None
