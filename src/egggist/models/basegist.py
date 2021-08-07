@@ -3,8 +3,6 @@ Data model for a GitHub Gist create response
 
 Missing: dataclass for `forks`
 """
-from __future__ import annotations
-
 from dataclasses import asdict
 from dataclasses import dataclass
 from typing import Any
