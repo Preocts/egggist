@@ -24,29 +24,36 @@ class EggGist:
 
     log = logging.getLogger(__name__)
 
-    def __init__(self) -> None:
+    def __init__(self, check_config: bool = True) -> None:
         """Create instance and load config file"""
         self.config: ConfigFile = self._load_config()
         self.conn = HTTPSConnection(host="api.github.com", port=443, timeout=5.0)
+        if check_config:
+            self._check_config()
 
     def _load_config(self) -> ConfigFile:
         """Loads JSON config from user home directory"""
-        if not pathlib.Path(self.CONFIG_FILE).exists():
+        try:
+            with open(self.CONFIG_FILE, "r", encoding="utf-8") as infile:
+                return ConfigFile.from_dict(json.load(infile))
+        except (json.JSONDecodeError, FileNotFoundError):
             return ConfigFile()
 
-        with open(self.CONFIG_FILE, "r", encoding="utf-8") as infile:
-            return ConfigFile.from_dict(json.load(infile))
-
-    def _build_headers(self) -> Dict[str, str]:
-        """Builds the header with auth key, prompts if key is not in config"""
+    def _check_config(self) -> None:
+        """Check config values, prompt for missing values"""
         if self.config.username is None:
             self.config.username = input("Enter GitHub username: ")
         if self.config.usertoken is None:
             self.config.usertoken = input("Enter GitHub auth token: ")
+
+    def _build_headers(self) -> Dict[str, str]:
+        """Builds the header with available auth key and username"""
+        username = self.config.username if self.config.username is not None else ""
+        usertoken = self.config.usertoken if self.config.usertoken is not None else ""
         return {
             "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"token {self.config.usertoken}",
-            "User-Agent": self.config.username,
+            "Authorization": f"token {usertoken}",
+            "User-Agent": username,
         }
 
     def post_gist(self, filename: str, filecontent: str) -> Optional[BaseGist]:

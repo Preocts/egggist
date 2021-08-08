@@ -18,22 +18,30 @@ CREATE_SUCCESS = open("tests/fixtures/create_success.json", "r").read().encode("
 CREATE_FAIL = open("tests/fixtures/create_fail_token.json", "r").read().encode("utf-8")
 
 
-@pytest.fixture(scope="function", name="config_file")
-def fixture_config_file() -> Generator[str, None, None]:
-    """Creates a config file and returns the path"""
+@pytest.fixture(scope="function", name="empty_file")
+def fixture_empty_file() -> Generator[str, None, None]:
+    """Creates an empty temp file and returns path"""
     try:
         file_desc, path = tempfile.mkstemp()
-        with os.fdopen(file_desc, "w", encoding="utf-8") as temp_file:
-            json.dump(MOCK_CONFIG, temp_file)
+        os.close(file_desc)
         yield path
     finally:
         os.remove(path)
 
 
+@pytest.fixture(scope="function", name="config_file")
+def fixture_config_file(empty_file: str) -> Generator[str, None, None]:
+    """Creates a config file and returns the path"""
+    with open(empty_file, "w", encoding="utf-8") as temp_file:
+        json.dump(MOCK_CONFIG, temp_file)
+
+    yield empty_file
+
+
 @pytest.fixture(scope="function", name="client")
 def fixture_client() -> Generator[EggGist, None, None]:
     """Gererate a client with config values mocked"""
-    client = EggGist()
+    client = EggGist(check_config=False)
     client.config.username = "mock"
     client.config.usertoken = "mock"
 
@@ -51,11 +59,24 @@ def test_create_instance_with_config(config_file: str) -> None:
 def test_create_instance_without_config() -> None:
     """Load without config to later prompt for values"""
     assert not Path(NO_FILE_NAMED_THIS).exists()
-    with patch.object(EggGist, "CONFIG_FILE", NO_FILE_NAMED_THIS):
-        gist_client = EggGist()
 
-    for value in gist_client.config.as_dict().values():
-        assert value is None
+    with patch("builtins.input", lambda value: "missing"):
+        with patch.object(EggGist, "CONFIG_FILE", NO_FILE_NAMED_THIS):
+            gist_client = EggGist()
+
+        for value in gist_client.config.as_dict().values():
+            assert value == "missing"
+
+
+def test_create_instance_invalid_config(empty_file: str) -> None:
+    """Load with invalid(empty) config"""
+
+    with patch("builtins.input", lambda value: "missing"):
+        with patch.object(EggGist, "CONFIG_FILE", empty_file):
+            gist_client = EggGist()
+
+        for value in gist_client.config.as_dict().values():
+            assert value == "missing"
 
 
 def test_configfile_class() -> None:
@@ -71,14 +92,15 @@ def test_configfile_class() -> None:
     assert config.as_dict() == MOCK_CONFIG
 
 
-def test_build_headers_missing() -> None:
+def test_build_headers_missing(client: EggGist) -> None:
     """Prompt for user input and use those values"""
-    client = EggGist()
-    with patch("builtins.input", lambda value: "mock"):
-        headers = client._build_headers()
+    client.config.username = None
+    client.config.usertoken = None
 
-    assert headers["User-Agent"] == "mock"
-    assert "mock" in headers["Authorization"]
+    headers = client._build_headers()
+
+    assert headers["User-Agent"] == ""
+    assert headers["Authorization"] == "token "
 
 
 def test_build_headers_present(client: EggGist) -> None:
