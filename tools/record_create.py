@@ -7,6 +7,7 @@ from typing import Dict
 from typing import NamedTuple
 
 from egggist.egggist import EggGist
+from egggist.egggist import File
 
 FILE_PATH = "tests/fixtures"
 FILE_SUCCESS = "create_success.json"
@@ -31,7 +32,7 @@ def build_client() -> EggGist:
     input_file = open(".env", "r", encoding="utf-8").read()
     secrets = Secrets(**load_secrets(input_file))
 
-    gist_client = EggGist()
+    gist_client = EggGist(check_config=False)
     gist_client.config.username = secrets.username
     gist_client.config.usertoken = secrets.usertoken
 
@@ -59,25 +60,14 @@ def record_successful_create() -> None:
 
     gist_client = build_client()
 
-    result = gist_client.post_gist(TEST_FILE, TEST_CONTENT)
+    gist_client.files.append(File("test1.md", "# Test 1"))
+    gist_client.files.append(File("test2.md", "# Test 2"))
 
-    open(filepath, "w").write(json.dumps(result, indent=4))
+    result = gist_client.post_gist()
 
+    assert result is not None
 
-def record_fail_create_token() -> None:
-    """Record failure due to token"""
-    filepath = pathlib.Path(FILE_PATH, FILE_FAIL)
-    if filepath.exists():
-        print(f"Skipping 'record_fail_create_token, file exists: {filepath}")
-        return
-
-    gist_client = build_client()
-
-    gist_client.config.usertoken = "notatoken"
-
-    result = gist_client.post_gist(TEST_FILE, TEST_CONTENT)
-
-    open(filepath, "w").write(json.dumps(result, indent=4))
+    open(filepath, "w").write(json.dumps(result.as_dict, indent=4))
 
 
 if __name__ == "__main__":
@@ -85,4 +75,3 @@ if __name__ == "__main__":
         raise ValueError(f"Missing '{FILE_PATH}' path")
 
     record_successful_create()
-    record_fail_create_token()

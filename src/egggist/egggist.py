@@ -22,6 +22,7 @@ from egggist.models.basegist import BaseGist
 class EggGist:
 
     CONFIG_FILE = f"{pathlib.Path.home()}/.egggist_conf"
+    DESCRIPTION = "An eggcellent automated gist"
 
     log = logging.getLogger(__name__)
 
@@ -68,25 +69,30 @@ class EggGist:
         with open(filename, "r", encoding="utf-8") as infile:
             self.files.append(File(pathlib.Path(filename).name, infile.read()))
 
-    def post_gist(self, filename: str, filecontent: str) -> Optional[BaseGist]:
+    def post_gist(self) -> Optional[BaseGist]:
         """create a gist"""
+        if not self.files:
+            return None
+
+        files = {file_.name: {"content": file_.content} for file_ in self.files}
+
         body = json.dumps(
             {
-                "description": "Eggcellent Gist",
+                "description": self.DESCRIPTION,
                 "public": True,
-                "files": {
-                    filename: {
-                        "content": filecontent,
-                    },
-                },
-            },
+                "files": files,
+            }
         )
+
         self.conn.request("POST", "/gists", body=body, headers=self._build_headers())
+
         response = self.conn.getresponse()
+
         if response.status != 201:
             self.log.error("Error status: %s", response.status)
             self.log.error("Error data %s", response.read().decode("utf-8"))
             return None
+
         return BaseGist(**json.loads(response.read().decode("utf-8")))
 
 
@@ -109,5 +115,5 @@ class ConfigFile:
 
 @dataclass
 class File:
-    filename: str
-    filecontent: str
+    name: str
+    content: str

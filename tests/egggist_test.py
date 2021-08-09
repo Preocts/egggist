@@ -119,10 +119,19 @@ def test_post_gist_success(client: EggGist) -> None:
         response = MagicMock(status=201, read=read)
         conn.getresponse = MagicMock(return_value=response)
 
-        results = client.post_gist("test.md", "")
+        client.files.append(egggist.File("test.md", "#"))
+
+        results = client.post_gist()
 
         assert results is not None
         assert results.as_dict == json_expected
+
+
+def test_post_no_files(client: EggGist) -> None:
+    """No files should return None, no mocking needed"""
+    result = client.post_gist()
+
+    assert result is None
 
 
 def test_post_gist_fail(client: EggGist) -> None:
@@ -132,7 +141,9 @@ def test_post_gist_fail(client: EggGist) -> None:
         response = MagicMock(status=403, read=read)
         conn.getresponse = MagicMock(return_value=response)
 
-        results = client.post_gist("test.md", "")
+        client.files.append(egggist.File("test.md", "#"))
+
+        results = client.post_gist()
 
         assert results is None
 
@@ -157,5 +168,5 @@ def test_add_file(client: EggGist, config_file: str) -> None:
     """Add a file to be posted"""
     client.add_file(config_file)
 
-    assert client.files[-1].filename == Path(config_file).name
-    assert client.files[-1].filecontent == json.dumps(MOCK_CONFIG, indent=4)
+    assert client.files[-1].name == Path(config_file).name
+    assert client.files[-1].content == json.dumps(MOCK_CONFIG, indent=4)
