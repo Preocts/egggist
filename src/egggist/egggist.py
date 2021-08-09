@@ -13,6 +13,7 @@ import pathlib
 from dataclasses import dataclass
 from http.client import HTTPSConnection
 from typing import Dict
+from typing import List
 from typing import Optional
 
 from egggist.models.basegist import BaseGist
@@ -28,6 +29,7 @@ class EggGist:
         """Create instance and load config file"""
         self.config: ConfigFile = self._load_config()
         self.conn = HTTPSConnection(host="api.github.com", port=443, timeout=5.0)
+        self.files: List[File] = []
         if check_config:
             self._check_config()
 
@@ -60,6 +62,11 @@ class EggGist:
             "Authorization": f"token {usertoken}",
             "User-Agent": username,
         }
+
+    def add_file(self, filename: str) -> None:
+        """Adds a file to be sent to Gist"""
+        with open(filename, "r", encoding="utf-8") as infile:
+            self.files.append(File(pathlib.Path(filename).name, infile.read()))
 
     def post_gist(self, filename: str, filecontent: str) -> Optional[BaseGist]:
         """create a gist"""
@@ -98,3 +105,9 @@ class ConfigFile:
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         return {"username": self.username, "usertoken": self.usertoken}
+
+
+@dataclass
+class File:
+    filename: str
+    filecontent: str

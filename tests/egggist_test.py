@@ -33,7 +33,7 @@ def fixture_empty_file() -> Generator[str, None, None]:
 def fixture_config_file(empty_file: str) -> Generator[str, None, None]:
     """Creates a config file and returns the path"""
     with open(empty_file, "w", encoding="utf-8") as temp_file:
-        json.dump(MOCK_CONFIG, temp_file)
+        json.dump(MOCK_CONFIG, temp_file, indent=4)
 
     yield empty_file
 
@@ -151,3 +151,11 @@ def test_save_config(client: EggGist, config_file: str) -> None:
 
     assert result.username == expect_username
     assert result.usertoken == expect_usertoken
+
+
+def test_add_file(client: EggGist, config_file: str) -> None:
+    """Add a file to be posted"""
+    client.add_file(config_file)
+
+    assert client.files[-1].filename == Path(config_file).name
+    assert client.files[-1].filecontent == json.dumps(MOCK_CONFIG, indent=4)
