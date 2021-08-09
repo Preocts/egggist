@@ -1,4 +1,3 @@
-# python-template
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/Preocts/egggist/main.svg)](https://results.pre-commit.ci/latest/github/Preocts/egggist/main)
@@ -6,10 +5,14 @@
 
 # egggist
 
-Module Description
+CLI utility to post file(s) to a Gist
+
+---
 
 ### Requirements
 - Python >= 3.8
+
+---
 
 ## Local developer installation
 
