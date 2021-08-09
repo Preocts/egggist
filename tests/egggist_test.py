@@ -44,7 +44,7 @@ def fixture_client(config_file: str) -> Generator[EggGist, None, None]:
     with patch.object(EggGist, "CONFIG_FILE", config_file):
         client = EggGist(check_config=False)
 
-    yield client
+        yield client
 
 
 def test_create_instance_with_config(config_file: str) -> None:
@@ -137,6 +137,17 @@ def test_post_gist_fail(client: EggGist) -> None:
         assert results is None
 
 
-# def test_save_config_fail(client: EggGist, config_file: str) -> None:
-#     """Save when file cannot be opened"""
-#     with open(config_file, "w") as holdfile:
+def test_save_config(client: EggGist, config_file: str) -> None:
+    """Save config with different values"""
+    expect_username = "save_test"
+    expect_usertoken = "SAVE_TEST"
+
+    client.config.username = expect_username
+    client.config.usertoken = expect_usertoken
+
+    client._save_config()
+
+    result = client._load_config()
+
+    assert result.username == expect_username
+    assert result.usertoken == expect_usertoken

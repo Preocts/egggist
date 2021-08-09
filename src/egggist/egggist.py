@@ -39,6 +39,11 @@ class EggGist:
         except (json.JSONDecodeError, FileNotFoundError):
             return ConfigFile()
 
+    def _save_config(self) -> None:
+        """Saves JSON config to user home directory"""
+        with open(self.CONFIG_FILE, "w", encoding="utf-8") as outfile:
+            json.dump(self.config.as_dict(), outfile, indent=4)
+
     def _check_config(self) -> None:
         """Check config values, prompt for missing values"""
         if self.config.username is None:
