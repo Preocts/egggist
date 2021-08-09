@@ -39,11 +39,10 @@ def fixture_config_file(empty_file: str) -> Generator[str, None, None]:
 
 
 @pytest.fixture(scope="function", name="client")
-def fixture_client() -> Generator[EggGist, None, None]:
+def fixture_client(config_file: str) -> Generator[EggGist, None, None]:
     """Gererate a client with config values mocked"""
-    client = EggGist(check_config=False)
-    client.config.username = "mock"
-    client.config.usertoken = "mock"
+    with patch.object(EggGist, "CONFIG_FILE", config_file):
+        client = EggGist(check_config=False)
 
     yield client
 
@@ -108,8 +107,8 @@ def test_build_headers_present(client: EggGist) -> None:
 
     headers = client._build_headers()
 
-    assert headers["User-Agent"] == "mock"
-    assert "mock" in headers["Authorization"]
+    assert headers["User-Agent"] == MOCK_CONFIG["username"]
+    assert MOCK_CONFIG["usertoken"] in headers["Authorization"]
 
 
 def test_post_gist_success(client: EggGist) -> None:
@@ -136,3 +135,8 @@ def test_post_gist_fail(client: EggGist) -> None:
         results = client.post_gist("test.md", "")
 
         assert results is None
+
+
+# def test_save_config_fail(client: EggGist, config_file: str) -> None:
+#     """Save when file cannot be opened"""
+#     with open(config_file, "w") as holdfile:
