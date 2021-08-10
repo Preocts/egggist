@@ -69,7 +69,7 @@ class EggGist:
         with open(filename, "r", encoding="utf-8") as infile:
             self.files.append(File(pathlib.Path(filename).name, infile.read()))
 
-    def post_gist(self) -> Optional[BaseGist]:
+    def post_gist(self, public: bool = True) -> Optional[BaseGist]:
         """create a gist"""
         if not self.files:
             return None
@@ -79,7 +79,7 @@ class EggGist:
         body = json.dumps(
             {
                 "description": self.DESCRIPTION,
-                "public": True,
+                "public": public,
                 "files": files,
             }
         )
