@@ -28,13 +28,13 @@ class EggGist:
 
     def __init__(self, check_config: bool = True) -> None:
         """Create instance and load config file"""
-        self.config: ConfigFile = self._load_config()
+        self.config: ConfigFile = self.load_config()
         self.conn = HTTPSConnection(host="api.github.com", port=443, timeout=5.0)
         self.files: List[File] = []
         if check_config:
-            self._check_config()
+            self.check_config()
 
-    def _load_config(self) -> ConfigFile:
+    def load_config(self) -> ConfigFile:
         """Loads JSON config from user home directory"""
         try:
             with open(self.CONFIG_FILE, "r", encoding="utf-8") as infile:
@@ -42,12 +42,12 @@ class EggGist:
         except (json.JSONDecodeError, FileNotFoundError):
             return ConfigFile()
 
-    def _save_config(self) -> None:
+    def save_config(self) -> None:
         """Saves JSON config to user home directory"""
         with open(self.CONFIG_FILE, "w", encoding="utf-8") as outfile:
             json.dump(self.config.as_dict(), outfile, indent=4)
 
-    def _check_config(self) -> None:
+    def check_config(self) -> None:
         """Check config values, prompt for missing values"""
         if self.config.username is None:
             self.config.username = input("Enter GitHub username: ")

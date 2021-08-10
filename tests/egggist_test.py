@@ -148,7 +148,7 @@ def test_post_gist_fail(client: EggGist) -> None:
         assert results is None
 
 
-def test_save_config(client: EggGist, config_file: str) -> None:
+def test_save_config(client: EggGist) -> None:
     """Save config with different values"""
     expect_username = "save_test"
     expect_usertoken = "SAVE_TEST"
@@ -156,9 +156,9 @@ def test_save_config(client: EggGist, config_file: str) -> None:
     client.config.username = expect_username
     client.config.usertoken = expect_usertoken
 
-    client._save_config()
+    client.save_config()
 
-    result = client._load_config()
+    result = client.load_config()
 
     assert result.username == expect_username
     assert result.usertoken == expect_usertoken
