@@ -5,12 +5,56 @@
 
 # egggist
 
-CLI utility to post file(s) to a Gist
+CLI utility to post file(s) to a Gist.  Posts are, by default, public however the CLI allows you to flag them as private (secret) if desired. A personal access token is required, see `CLI Usage` below.
 
 ---
 
 ### Requirements
 - Python >= 3.8
+
+---
+
+### Installation
+
+**Note**: Replace `v1.0.0` with the desired version number or `main` for lastest (unstable) version
+
+Install via pip:
+```bash
+# Linux/MacOS
+python3 -m pip install git+https://github.com/preocts/egggist@v1.0.0
+
+# Windows
+py -m pip install git+https://github.com/preocts/egggist@v1.0.0
+```
+
+---
+
+### CLI Usage
+
+EggGist will prompt for your GitHub username and a user token. The token only needs `gist` permissions and can be created in Profile -> Settings -> Developer Settings -> Personal Access Tokens.
+
+**Note**: Your personal access token is stored, in plain-text, in your user home directory as `.egggist_conf`.  This file can be deleted at anytime and I **strongly** recommend restricting the token perimissions to only `gist`.
+
+```bash
+usage: prfiles [-h] [--set-username NAME] [--set-token TOKEN] [--private] [--debug] [filename [filename ...]]
+
+Send a file to your GitHub Gist.
+
+positional arguments:
+  filename             One, or more, files to be added to the gist (utf-8 encoding)
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --set-username NAME  Store your username in '~/.egggist_conf
+  --set-token TOKEN    Set your user token in `~/.egggist_conf
+  --private            Make the gist private
+  --debug              Turns internal logging level to DEBUG.
+```
+
+Sample, posting three files to one private gist:
+```bash
+$ egggist file1.txt file2.txt file3.txt --private
+```
 
 ---
 
